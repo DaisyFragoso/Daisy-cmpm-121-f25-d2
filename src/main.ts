@@ -1,3 +1,4 @@
+// step 2 completed
 import "./style.css";
 
 document.body.innerHTML = `
@@ -32,7 +33,7 @@ canvas.addEventListener("mousemove", (e) => {
   }
 });
 
-canvas.addEventListener("mouseup", (e) => {
+canvas.addEventListener("mouseup", (_e) => {
   cursor.active = false;
 });
 
