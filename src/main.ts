@@ -2,6 +2,8 @@ import "./style.css";
 
 document.body.innerHTML = `
   <canvas id="canvas"></canvas>
+  <button id="thinButton">Thin</button>
+  <button id="thickButton">Thick</button>
   <br><br>
   <button id="clearButton">Clear</button>
   <button id="undoButton">Undo</button>
@@ -26,8 +28,10 @@ interface DisplayCommand {
 //marker line
 class MarkerLine implements DisplayCommand {
   private points: Point[] = [];
+  private thickness: number;
 
-  constructor(startX: number, startY: number) {
+  constructor(startX: number, startY: number, thickness: number) {
+    this.thickness = thickness;
     this.points.push({ x: startX, y: startY });
   }
 
@@ -39,11 +43,14 @@ class MarkerLine implements DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void {
     if (this.points.length === 0) return;
 
+    ctx.beginPath();
+    ctx.lineWidth = this.thickness;
     ctx.moveTo(this.points[0].x, this.points[0].y);
     for (let i = 1; i < this.points.length; i++) {
       const p = this.points[i];
       ctx.lineTo(p.x, p.y);
     }
+    ctx.stroke();
   }
 }
 
@@ -54,6 +61,12 @@ const redoArray: DisplayCommand[] = [];
 
 // tacks if drawing or not
 const cursor = { active: false };
+
+//markers tools
+const thin_MARKER = 1;
+const thick_MARKER = 8;
+
+let currentThickness = thin_MARKER;
 
 function dispatchDrawingChanged() {
   const event = new Event("drawing-changed");
@@ -69,22 +82,33 @@ function redraw() {
   ctx.fillStyle = "green";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.beginPath();
+  // ctx.beginPath();
   for (const command of drawing) {
     command.display(ctx);
   }
-  ctx.stroke();
 }
 
 //Listen for drawing-changed
 canvas.addEventListener("drawing-changed", redraw);
+
+// helper update button clases
+const thinButton = document.getElementById("thinButton")!;
+const thickButton = document.getElementById("thickButton")!;
+
+function updateSelectedToolButtons() {
+  thinButton.classList.toggle("selectedTool", currentThickness === thin_MARKER);
+  thickButton.classList.toggle(
+    "selectedTool",
+    currentThickness === thick_MARKER,
+  );
+}
 
 // ------ Mouse events ------------
 // start a new stroke
 canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
 
-  const newStroke = new MarkerLine(e.offsetX, e.offsetY);
+  const newStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
   drawing.push(newStroke);
 
   redoArray.length = 0;
@@ -143,6 +167,17 @@ redoButton.addEventListener("click", () => {
   drawing.push(stroke);
 
   dispatchDrawingChanged();
+});
+
+// --- marker thin/ thick button listeners
+thinButton.addEventListener("click", () => {
+  currentThickness = thin_MARKER;
+  updateSelectedToolButtons();
+});
+
+thickButton.addEventListener("click", () => {
+  currentThickness = thick_MARKER;
+  updateSelectedToolButtons();
 });
 
 // initial background load
