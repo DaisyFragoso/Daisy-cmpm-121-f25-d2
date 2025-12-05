@@ -4,6 +4,8 @@ document.body.innerHTML = `
   <canvas id="canvas"></canvas>
   <br><br>
   <button id="clearButton">Clear</button>
+  <button id="undoButton">Undo</button>
+  <button id="redoButton">Redo</button>
 `;
 
 // canvas set up
@@ -16,8 +18,10 @@ const ctx = canvas.getContext("2d")!;
 //  data structures
 type Point = { x: number; y: number };
 
-//drawing aka each stoke is an array of points
+//drawing aka each art stoke is an array of points
 const drawing: Point[][] = [];
+//redo arrays
+const redoArray: Point[][] = [];
 
 // tacks if drawing or not
 const cursor = { active: false };
@@ -66,6 +70,8 @@ canvas.addEventListener("mousedown", (e) => {
   newStroke.push({ x: e.offsetX, y: e.offsetY });
   drawing.push(newStroke);
 
+  redoArray.length = 0;
+
   dispatchDrawingChanged();
 });
 
@@ -90,11 +96,34 @@ canvas.addEventListener("mouseleave", () => {
   cursor.active = false;
 });
 
-//  Clear button
+// clear button
 const clearButton = document.getElementById("clearButton")!;
 clearButton.addEventListener("click", () => {
   // clear the data, not just the pixels
   drawing.length = 0;
+  redoArray.length = 0;
+
+  dispatchDrawingChanged();
+});
+
+// undo Button
+const undoButton = document.getElementById("undoButton")!;
+undoButton.addEventListener("click", () => {
+  if (drawing.length === 0) return;
+
+  const stroke = drawing.pop()!;
+  redoArray.push(stroke);
+
+  dispatchDrawingChanged();
+});
+
+// redo button
+const redoButton = document.getElementById("redoButton")!;
+redoButton.addEventListener("click", () => {
+  if (redoArray.length === 0) return;
+
+  const stroke = redoArray.pop()!;
+  drawing.push(stroke);
 
   dispatchDrawingChanged();
 });
