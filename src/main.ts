@@ -54,6 +54,35 @@ class MarkerLine implements DisplayCommand {
   }
 }
 
+//---preview command------
+interface ToolPreview {
+  display(ctx: CanvasRenderingContext2D): void;
+}
+
+class MarkerPreview implements ToolPreview {
+  private x: number;
+  private y: number;
+  private thickness: number;
+
+  constructor(x: number, y: number, thickness: number) {
+    this.x = x;
+    this.y = y;
+    this.thickness = thickness;
+  }
+
+  display(ctx: CanvasRenderingContext2D): void {
+    const fontSize = this.thickness * 15;
+    ctx.font = `${fontSize}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillStyle = "black";
+    ctx.fillText("O", this.x, this.y);
+  }
+}
+
+let preview: MarkerPreview | null = null;
+
 //drawing aka each art stoke is an array of points
 const drawing: DisplayCommand[] = [];
 //redo arrays
@@ -73,6 +102,11 @@ function dispatchDrawingChanged() {
   canvas.dispatchEvent(event);
 }
 
+function dispatchToolMoved() {
+  const event = new Event("tool-moved");
+  canvas.dispatchEvent(event);
+}
+
 // ---- Redraw everything from `drawing` ----
 function redraw() {
   // clear canvas
@@ -86,10 +120,17 @@ function redraw() {
   for (const command of drawing) {
     command.display(ctx);
   }
+
+  // draw preview only when mouse is not down
+  if (!cursor.active && preview !== null) {
+    preview.display(ctx);
+  }
 }
 
 //Listen for drawing-changed
 canvas.addEventListener("drawing-changed", redraw);
+canvas.addEventListener("drawing-changed", redraw);
+canvas.addEventListener("tool-moved", redraw);
 
 // helper update button clases
 const thinButton = document.getElementById("thinButton")!;
@@ -112,19 +153,25 @@ canvas.addEventListener("mousedown", (e) => {
   drawing.push(newStroke);
 
   redoArray.length = 0;
+  preview = null;
 
   dispatchDrawingChanged();
 });
 
 // to add points to current stroke
 canvas.addEventListener("mousemove", (e) => {
-  if (!cursor.active) return;
-  if (drawing.length === 0) return; // safety
+  // if (!cursor.active) return;
+  if (cursor.active) {
+    if (drawing.length === 0) return; // safety
 
-  const currentStroke = drawing[drawing.length - 1] as MarkerLine;
-  currentStroke.drag(e.offsetX, e.offsetY);
+    const currentStroke = drawing[drawing.length - 1] as MarkerLine;
+    currentStroke.drag(e.offsetX, e.offsetY);
 
-  dispatchDrawingChanged();
+    dispatchDrawingChanged();
+  } else {
+    preview = new MarkerPreview(e.offsetX, e.offsetY, currentThickness);
+    dispatchToolMoved();
+  }
 });
 
 // stop drawing
@@ -135,6 +182,8 @@ canvas.addEventListener("mouseup", () => {
 //so it stops if mouse leaves canvas
 canvas.addEventListener("mouseleave", () => {
   cursor.active = false;
+  preview = null;
+  dispatchToolMoved();
 });
 
 // clear button
