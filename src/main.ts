@@ -16,13 +16,13 @@ const ctx = canvas.getContext("2d")!;
 //  data structures
 type Point = { x: number; y: number };
 
-//drawing aka each stoke is an array of points 
+//drawing aka each stoke is an array of points
 const drawing: Point[][] = [];
 
 // tacks if drawing or not
 const cursor = { active: false };
 
-function dispatchDrawingChanged(){
+function dispatchDrawingChanged() {
   const event = new Event("drawing-changed");
   canvas.dispatchEvent(event);
 }
@@ -54,9 +54,8 @@ function redraw() {
   ctx.stroke();
 }
 
-//Listen for drawing-changed 
+//Listen for drawing-changed
 canvas.addEventListener("drawing-changed", redraw);
-
 
 // ------ Mouse events ------------
 // start a new stroke
@@ -91,7 +90,7 @@ canvas.addEventListener("mouseleave", () => {
   cursor.active = false;
 });
 
-//  Clear button 
+//  Clear button
 const clearButton = document.getElementById("clearButton")!;
 clearButton.addEventListener("click", () => {
   // clear the data, not just the pixels
