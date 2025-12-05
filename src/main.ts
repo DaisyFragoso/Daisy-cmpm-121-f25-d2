@@ -18,10 +18,39 @@ const ctx = canvas.getContext("2d")!;
 //  data structures
 type Point = { x: number; y: number };
 
+// display command
+interface DisplayCommand { 
+  display(ctx: CanvasRenderingContext2D): void;
+}
+
+//marker line 
+class MarkerLine implements DisplayCommand { 
+  private points: Point[] = [];
+
+  constructor(startX: number, startY: number) {
+    this.points.push({ x: startX, y: startY });
+  }
+
+  drag(x: number, y: number) {
+    this.points.push({ x, y });
+  }
+
+  // Add this line's geometry to the current path
+  display(ctx: CanvasRenderingContext2D): void {
+    if (this.points.length === 0) return;
+
+    ctx.moveTo(this.points[0].x, this.points[0].y);
+    for (let i = 1; i < this.points.length; i++) {
+      const p = this.points[i];
+      ctx.lineTo(p.x, p.y);
+    }
+  }
+}
+
 //drawing aka each art stoke is an array of points
-const drawing: Point[][] = [];
+const drawing: DisplayCommand[] = [];
 //redo arrays
-const redoArray: Point[][] = [];
+const redoArray: DisplayCommand[] = [];
 
 // tacks if drawing or not
 const cursor = { active: false };
@@ -40,21 +69,10 @@ function redraw() {
   ctx.fillStyle = "green";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // draw all strokes
   ctx.beginPath();
-  for (const stroke of drawing) {
-    if (stroke.length === 0) continue;
-
-    // move to first point in stroke
-    ctx.moveTo(stroke[0].x, stroke[0].y);
-
-    // draw lines through rest of points
-    for (let i = 1; i < stroke.length; i++) {
-      const p = stroke[i];
-      ctx.lineTo(p.x, p.y);
-    }
-  }
-
+  for (const command of drawing) {
+    command.display(ctx);
+   }
   ctx.stroke();
 }
 
@@ -66,8 +84,7 @@ canvas.addEventListener("drawing-changed", redraw);
 canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
 
-  const newStroke: Point[] = [];
-  newStroke.push({ x: e.offsetX, y: e.offsetY });
+  const newStroke = new MarkerLine(e.offsetX, e.offsetY);
   drawing.push(newStroke);
 
   redoArray.length = 0;
@@ -80,8 +97,8 @@ canvas.addEventListener("mousemove", (e) => {
   if (!cursor.active) return;
   if (drawing.length === 0) return; // safety
 
-  const currentStroke = drawing[drawing.length - 1];
-  currentStroke.push({ x: e.offsetX, y: e.offsetY });
+  const currentStroke = drawing[drawing.length - 1] as MarkerLine;
+  currentStroke.drag(e.offsetX, e.offsetY);
 
   dispatchDrawingChanged();
 });
