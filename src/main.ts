@@ -19,12 +19,12 @@ const ctx = canvas.getContext("2d")!;
 type Point = { x: number; y: number };
 
 // display command
-interface DisplayCommand { 
+interface DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void;
 }
 
-//marker line 
-class MarkerLine implements DisplayCommand { 
+//marker line
+class MarkerLine implements DisplayCommand {
   private points: Point[] = [];
 
   constructor(startX: number, startY: number) {
@@ -72,7 +72,7 @@ function redraw() {
   ctx.beginPath();
   for (const command of drawing) {
     command.display(ctx);
-   }
+  }
   ctx.stroke();
 }
 
