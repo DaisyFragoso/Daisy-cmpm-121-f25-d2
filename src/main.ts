@@ -30,8 +30,6 @@ type Tool = "marker" | "sticker";
 let currentTool: Tool = "marker";
 let currentSticker = "🍪";
 
-
-
 // display command
 interface DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void;
@@ -42,25 +40,25 @@ class StickerPreview implements DisplayCommand {
   x: number;
   y: number;
 
-  constructor(emoji: string, x: number, y: number) { 
+  constructor(emoji: string, x: number, y: number) {
     this.emoji = emoji;
     this.x = x;
     this.y = y;
   }
-  drag(x: number, y: number) { 
+  drag(x: number, y: number) {
     this.x = x;
     this.y = y;
   }
-  display(ctx: CanvasRenderingContext2D): void{
+  display(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.font = "32px sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(this.emoji, this.x, this.y);
     ctx.restore();
-   }
+  }
 }
- 
+
 //places sticker
 class StickerStamp implements DisplayCommand {
   emoji: string;
@@ -202,9 +200,13 @@ function updateSelectedToolButtons() {
 }
 
 //sticker buttons
-const stickerSmile = document.getElementById("stickerSmile") as HTMLButtonElement;
+const stickerSmile = document.getElementById(
+  "stickerSmile",
+) as HTMLButtonElement;
 const stickerStar = document.getElementById("stickerStar") as HTMLButtonElement;
-const stickerHeart = document.getElementById("stickerHeart") as HTMLButtonElement;
+const stickerHeart = document.getElementById(
+  "stickerHeart",
+) as HTMLButtonElement;
 
 function selectMarker(thickness: number) {
   currentTool = "marker";
@@ -273,7 +275,7 @@ canvas.addEventListener("mousemove", (e) => {
       }
     }
   } else {
-    // preview for marker 
+    // preview for marker
     if (currentTool === "marker") {
       preview = new MarkerPreview(e.offsetX, e.offsetY, currentThickness);
       dispatchToolMoved();
@@ -290,7 +292,9 @@ canvas.addEventListener("mouseup", () => {
   if (!cursor.active) return;
   cursor.active = false;
 
-  if (currentTool === "sticker" && preview && preview instanceof StickerPreview) {
+  if (
+    currentTool === "sticker" && preview && preview instanceof StickerPreview
+  ) {
     const finalSticker = new StickerStamp(preview.emoji, preview.x, preview.y);
     drawing.push(finalSticker);
     preview = null;
