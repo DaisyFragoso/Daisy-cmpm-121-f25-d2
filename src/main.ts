@@ -30,6 +30,11 @@ type Tool = "marker" | "sticker";
 let currentTool: Tool = "marker";
 let currentSticker = "🍪";
 
+//markers tools
+const thin_MARKER = 3;
+const thick_MARKER = 8;
+let currentThickness = thin_MARKER;
+
 // display command
 interface DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void;
@@ -146,12 +151,6 @@ const redoArray: DisplayCommand[] = [];
 
 // tacks if drawing or not
 const cursor = { active: false };
-
-//markers tools
-const thin_MARKER = 3;
-const thick_MARKER = 8;
-
-let currentThickness = thin_MARKER;
 
 function dispatchDrawingChanged() {
   const event = new Event("drawing-changed");
