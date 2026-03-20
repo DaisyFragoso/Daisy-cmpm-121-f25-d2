@@ -296,9 +296,14 @@ canvas.addEventListener("mouseup", () => {
   cursor.active = false;
 
   if (
-    currentTool === "sticker" && activeCommand && activeCommand instanceof StickerPreview
+    currentTool === "sticker" && activeCommand &&
+    activeCommand instanceof StickerPreview
   ) {
-    const finalSticker = new StickerStamp(activeCommand.emoji, activeCommand.x, activeCommand.y);
+    const finalSticker = new StickerStamp(
+      activeCommand.emoji,
+      activeCommand.x,
+      activeCommand.y,
+    );
     drawing.push(finalSticker);
     preview = null;
     dispatchDrawingChanged();
