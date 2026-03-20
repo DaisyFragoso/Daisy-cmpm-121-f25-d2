@@ -6,9 +6,8 @@ document.body.innerHTML = `
   <button id="thinButton">Thin</button>
   <button id="thickButton">Thick</button>
   <br><br>
-  <button id="stickerSmile">🍪</button>
-  <button id="stickerStar">🎶</button>
-  <button id="stickerHeart">❤️</button>
+  <div id="stickerButtons"></div>
+  <button id="customStickerButton">Custom</button>
   <br><br>
   <button id="clearButton">Clear</button>
   <button id="undoButton">Undo</button>
@@ -29,6 +28,7 @@ type Point = { x: number; y: number };
 type Tool = "marker" | "sticker";
 let currentTool: Tool = "marker";
 let currentSticker = "🍪";
+const stickers = ["🍪", "🎶", "❤️"];
 
 //markers tools
 const thin_MARKER = 3;
@@ -39,6 +39,39 @@ let currentThickness = thin_MARKER;
 interface DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void;
 }
+
+const stickerButtonsDiv = document.getElementById(
+  "stickerButtons",
+) as HTMLDivElement;
+const customStickerButton = document.getElementById(
+  "customStickerButton",
+) as HTMLButtonElement;
+
+function renderStickerButtons() {
+  stickerButtonsDiv.innerHTML = "";
+
+  for (const emoji of stickers) {
+    const button = document.createElement("button");
+    button.textContent = emoji;
+
+    button.addEventListener("click", () => {
+      selectSticker(emoji);
+    });
+
+    stickerButtonsDiv.appendChild(button);
+  }
+}
+
+customStickerButton.addEventListener("click", () => {
+  const text = prompt("Custom sticker text", "🧽");
+  if (!text || text.trim() === "") return;
+
+  stickers.push(text);
+  renderStickerButtons();
+  selectSticker(text);
+});
+
+renderStickerButtons();
 
 class StickerPreview implements DisplayCommand {
   emoji: string;
@@ -152,6 +185,12 @@ const redoArray: DisplayCommand[] = [];
 // tacks if drawing or not
 const cursor = { active: false };
 
+const text = prompt("Custom sticker text", "🧽");
+if (text && text.trim() !== "") {
+  stickers.push(text);
+  // rebuild sticker buttons
+}
+
 function dispatchDrawingChanged() {
   const event = new Event("drawing-changed");
   canvas.dispatchEvent(event);
@@ -185,7 +224,7 @@ function redraw() {
   }
 }
 
-//Listen for drawing-changed
+// Listen for drawing-changed
 canvas.addEventListener("drawing-changed", redraw);
 canvas.addEventListener("tool-moved", redraw);
 
@@ -201,14 +240,14 @@ function updateSelectedToolButtons() {
   );
 }
 
-//sticker buttons
-const stickerSmile = document.getElementById(
-  "stickerSmile",
-) as HTMLButtonElement;
-const stickerStar = document.getElementById("stickerStar") as HTMLButtonElement;
-const stickerHeart = document.getElementById(
-  "stickerHeart",
-) as HTMLButtonElement;
+// sticker buttons
+// const stickerSmile = document.getElementById(
+//   "stickerSmile",
+// ) as HTMLButtonElement;
+// const stickerStar = document.getElementById("stickerStar") as HTMLButtonElement;
+// const stickerHeart = document.getElementById(
+//   "stickerHeart",
+// ) as HTMLButtonElement;
 
 function selectMarker(thickness: number) {
   currentTool = "marker";
@@ -230,18 +269,6 @@ thinButton.addEventListener("click", () => {
 
 thickButton.addEventListener("click", () => {
   selectMarker(thick_MARKER);
-});
-
-stickerSmile.addEventListener("click", () => {
-  selectSticker("🍪");
-});
-
-stickerStar.addEventListener("click", () => {
-  selectSticker("🎶");
-});
-
-stickerHeart.addEventListener("click", () => {
-  selectSticker("❤️");
 });
 
 // ------ Mouse events ------------
