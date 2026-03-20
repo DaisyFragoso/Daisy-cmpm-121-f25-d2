@@ -13,7 +13,8 @@ document.body.innerHTML = `
   <button id="undoButton">Undo</button>
   <button id="redoButton">Redo</button>
   <input type="file" id="imageUpload" accept="image/png" />
-
+  <br>
+  <button id="exportButton">Export Art</button>
   `;
 
 // canvas set up
@@ -386,7 +387,6 @@ thickButton.addEventListener("click", () => {
 });
 
 const imageUpload = document.getElementById("imageUpload") as HTMLInputElement;
-
 imageUpload.addEventListener("change", () => {
   const file = imageUpload.files?.[0];
   if (!file) return;
@@ -402,6 +402,30 @@ imageUpload.addEventListener("change", () => {
     URL.revokeObjectURL(objectUrl);
   };
   img.src = objectUrl;
+});
+
+const exportButton = document.getElementById(
+  "exportButton",
+) as HTMLButtonElement;
+exportButton.addEventListener("click", () => {
+  const exportCanvas = document.createElement("canvas");
+  exportCanvas.width = 1024;
+  exportCanvas.height = 1024;
+
+  const exportCtx = exportCanvas.getContext("2d")!;
+  exportCtx.scale(4, 4);
+
+  exportCtx.fillStyle = "green";
+  exportCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (const command of drawing) {
+    command.display(exportCtx);
+  }
+
+  const anchor = document.createElement("a");
+  anchor.href = exportCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
 });
 
 // initial background load
