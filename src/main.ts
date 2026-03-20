@@ -12,7 +12,9 @@ document.body.innerHTML = `
   <button id="clearButton">Clear</button>
   <button id="undoButton">Undo</button>
   <button id="redoButton">Redo</button>
-`;
+  <input type="file" id="imageUpload" accept="image/png" />
+
+  `;
 
 // canvas set up
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -74,7 +76,7 @@ customStickerButton.addEventListener("click", () => {
 
 renderStickerButtons();
 
-class StickerPreview implements DisplayCommand {
+class StickerPreview implements DraggableCommand {
   sticker: StickerType;
   x: number;
   y: number;
@@ -381,6 +383,25 @@ thinButton.addEventListener("click", () => {
 thickButton.addEventListener("click", () => {
   currentThickness = thick_MARKER;
   updateSelectedToolButtons();
+});
+
+const imageUpload = document.getElementById("imageUpload") as HTMLInputElement;
+
+imageUpload.addEventListener("change", () => {
+  const file = imageUpload.files?.[0];
+  if (!file) return;
+
+  const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
+
+  img.onload = () => {
+    currentTool = "sticker";
+    currentSticker = img;
+    preview = null;
+    dispatchToolMoved();
+    URL.revokeObjectURL(objectUrl);
+  };
+  img.src = objectUrl;
 });
 
 // initial background load
