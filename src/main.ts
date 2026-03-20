@@ -27,7 +27,8 @@ type Point = { x: number; y: number };
 //keeps track if using marker or sticker
 type Tool = "marker" | "sticker";
 let currentTool: Tool = "marker";
-let currentSticker = "🍪";
+type StickerType = string | HTMLImageElement;
+let currentSticker: StickerType = "🍪";
 const stickers = ["🍪", "🎶", "❤️"];
 
 //markers tools
@@ -74,12 +75,12 @@ customStickerButton.addEventListener("click", () => {
 renderStickerButtons();
 
 class StickerPreview implements DisplayCommand {
-  emoji: string;
+  sticker: StickerType;
   x: number;
   y: number;
 
-  constructor(emoji: string, x: number, y: number) {
-    this.emoji = emoji;
+  constructor(sticker: StickerType, x: number, y: number) {
+    this.sticker = sticker;
     this.x = x;
     this.y = y;
   }
@@ -89,32 +90,41 @@ class StickerPreview implements DisplayCommand {
   }
   display(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.font = "32px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(this.emoji, this.x, this.y);
+    if (typeof this.sticker === "string") {
+      ctx.font = "32px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.sticker, this.x, this.y);
+    } else {
+      // ctx.restore();
+      ctx.drawImage(this.sticker, this.x - 16, this.y - 16, 32, 32);
+    }
     ctx.restore();
   }
 }
 
 //places sticker
 class StickerStamp implements DisplayCommand {
-  emoji: string;
+  sticker: StickerType;
   x: number;
   y: number;
 
-  constructor(emoji: string, x: number, y: number) {
-    this.emoji = emoji;
+  constructor(sticker: StickerType, x: number, y: number) {
+    this.sticker = sticker;
     this.x = x;
     this.y = y;
   }
 
   display(ctx: CanvasRenderingContext2D): void {
     ctx.save();
-    ctx.font = "32px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(this.emoji, this.x, this.y);
+    if (typeof this.sticker === "string") {
+      ctx.font = "32px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(this.sticker, this.x, this.y);
+    } else {
+      ctx.drawImage(this.sticker, this.x - 16, this.y - 16, 32, 32);
+    }
     ctx.restore();
   }
 }
@@ -185,12 +195,6 @@ const redoArray: DisplayCommand[] = [];
 // tacks if drawing or not
 const cursor = { active: false };
 
-const text = prompt("Custom sticker text", "🧽");
-if (text && text.trim() !== "") {
-  stickers.push(text);
-  // rebuild sticker buttons
-}
-
 function dispatchDrawingChanged() {
   const event = new Event("drawing-changed");
   canvas.dispatchEvent(event);
@@ -240,15 +244,6 @@ function updateSelectedToolButtons() {
   );
 }
 
-// sticker buttons
-// const stickerSmile = document.getElementById(
-//   "stickerSmile",
-// ) as HTMLButtonElement;
-// const stickerStar = document.getElementById("stickerStar") as HTMLButtonElement;
-// const stickerHeart = document.getElementById(
-//   "stickerHeart",
-// ) as HTMLButtonElement;
-
 function selectMarker(thickness: number) {
   currentTool = "marker";
   currentThickness = thickness;
@@ -256,9 +251,9 @@ function selectMarker(thickness: number) {
   dispatchToolMoved();
 }
 
-function selectSticker(emoji: string) {
+function selectSticker(sticker: StickerType) {
   currentTool = "sticker";
-  currentSticker = emoji;
+  currentSticker = sticker;
   preview = null;
   dispatchToolMoved();
 }
@@ -323,15 +318,15 @@ canvas.addEventListener("mouseup", () => {
   cursor.active = false;
 
   if (
-    currentTool === "sticker" && activeCommand &&
-    activeCommand instanceof StickerPreview
+    currentTool === "sticker" && activeCommand instanceof StickerPreview
   ) {
     const finalSticker = new StickerStamp(
-      activeCommand.emoji,
+      activeCommand.sticker,
       activeCommand.x,
       activeCommand.y,
     );
     drawing.push(finalSticker);
+    activeCommand = null;
     preview = null;
     dispatchDrawingChanged();
   }
