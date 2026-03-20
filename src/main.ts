@@ -86,8 +86,11 @@ class StickerStamp implements DisplayCommand {
   }
 }
 
+interface DraggableCommand extends DisplayCommand {
+  drag(x: number, y: number): void;
+}
 //marker line
-class MarkerLine implements DisplayCommand {
+class MarkerLine implements DraggableCommand {
   private points: Point[] = [];
   private thickness: number;
 
@@ -103,46 +106,43 @@ class MarkerLine implements DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void {
     if (this.points.length === 0) return;
 
+    ctx.save();
     ctx.beginPath();
     ctx.lineWidth = this.thickness;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "black";
+
     ctx.moveTo(this.points[0].x, this.points[0].y);
     for (let i = 1; i < this.points.length; i++) {
       const p = this.points[i];
       ctx.lineTo(p.x, p.y);
     }
     ctx.stroke();
+    ctx.restore();
   }
 }
 
-//---preview command------
-interface ToolPreview {
-  display(ctx: CanvasRenderingContext2D): void;
-}
-
-class MarkerPreview implements ToolPreview {
-  private x: number;
-  private y: number;
-  private thickness: number;
-
-  constructor(x: number, y: number, thickness: number) {
-    this.x = x;
-    this.y = y;
-    this.thickness = thickness;
-  }
+// class MarkerPreview implements ToolPreview {
+class MarkerPreview implements DisplayCommand {
+  constructor(
+    public x: number,
+    public y: number,
+    public thickness: number,
+  ) {}
 
   display(ctx: CanvasRenderingContext2D): void {
-    const fontSize = this.thickness * 3;
-    ctx.font = `${fontSize}px sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
+    ctx.save();
+    ctx.beginPath();
     ctx.fillStyle = "black";
-    ctx.fillText("O", this.x, this.y);
+    ctx.arc(this.x, this.y, this.thickness / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
-// let preview: MarkerPreview | null = null;
-let preview: MarkerPreview | StickerPreview | null = null;
+let preview: DisplayCommand | null = null;
+let activeCommand: DraggableCommand | null = null;
 
 //drawing aka each art stoke is an array of points
 const drawing: DisplayCommand[] = [];
@@ -179,6 +179,9 @@ function redraw() {
   // draw preview only when mouse is not down
   if (!cursor.active && preview !== null) {
     preview.display(ctx);
+  }
+  if (cursor.active && currentTool === "sticker" && activeCommand) {
+    activeCommand.display(ctx);
   }
 }
 
@@ -253,8 +256,9 @@ canvas.addEventListener("mousedown", (e) => {
     preview = null;
     dispatchDrawingChanged();
   } else if (currentTool === "sticker") {
-    preview = new StickerPreview(currentSticker, e.offsetX, e.offsetY);
+    activeCommand = new StickerPreview(currentSticker, e.offsetX, e.offsetY);
     redoArray.length = 0;
+    preview = null;
     dispatchToolMoved();
   }
 });
@@ -268,8 +272,8 @@ canvas.addEventListener("mousemove", (e) => {
       currentStroke.drag(e.offsetX, e.offsetY);
       dispatchDrawingChanged();
     } else if (currentTool === "sticker") {
-      if (preview && preview instanceof StickerPreview) {
-        preview.drag(e.offsetX, e.offsetY);
+      if (activeCommand && activeCommand instanceof StickerPreview) {
+        activeCommand.drag(e.offsetX, e.offsetY);
         dispatchToolMoved();
       }
     }
@@ -292,9 +296,9 @@ canvas.addEventListener("mouseup", () => {
   cursor.active = false;
 
   if (
-    currentTool === "sticker" && preview && preview instanceof StickerPreview
+    currentTool === "sticker" && activeCommand && activeCommand instanceof StickerPreview
   ) {
-    const finalSticker = new StickerStamp(preview.emoji, preview.x, preview.y);
+    const finalSticker = new StickerStamp(activeCommand.emoji, activeCommand.x, activeCommand.y);
     drawing.push(finalSticker);
     preview = null;
     dispatchDrawingChanged();
@@ -305,6 +309,7 @@ canvas.addEventListener("mouseup", () => {
 canvas.addEventListener("mouseleave", () => {
   cursor.active = false;
   preview = null;
+  activeCommand = null;
   dispatchToolMoved();
 });
 
