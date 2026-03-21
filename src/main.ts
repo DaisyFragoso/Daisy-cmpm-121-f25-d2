@@ -1,12 +1,13 @@
 import "./style.css";
 
 document.body.innerHTML = `
-  <div id="app">  
+  <div id="app">
     <canvas id="canvas"></canvas>
-    <div>
-      <button id="thinButton">Thin</button>
-      <button id="thickButton">Thick</button>
-    </div>    
+    <div class="controls-row">
+      <label for="markerSize">Marker Size</label>
+      <input type="range" id="markerSize" min="1" max="20" value="4" />
+      <span id="markerSizeValue">4</span>
+    </div>
     <div>
       <button id="customStickerButton">CustomSticker</button>
       <div id="stickerButtons"></div>
@@ -40,10 +41,9 @@ type StickerType = string | HTMLImageElement;
 let currentSticker: StickerType = "🍪";
 const stickers = ["🍪", "🎶", "❤️"];
 
-//markers tools
-const thin_MARKER = 3;
-const thick_MARKER = 8;
-let currentThickness = thin_MARKER;
+//marker defaults
+const DEFAULT_MARKER_SIZE = 4;
+let currentThickness = DEFAULT_MARKER_SIZE;
 
 // display command
 interface DisplayCommand {
@@ -241,39 +241,12 @@ function redraw() {
 canvas.addEventListener("drawing-changed", redraw);
 canvas.addEventListener("tool-moved", redraw);
 
-// helper update button clases
-const thinButton = document.getElementById("thinButton")!;
-const thickButton = document.getElementById("thickButton")!;
-
-function updateSelectedToolButtons() {
-  thinButton.classList.toggle("selectedTool", currentThickness === thin_MARKER);
-  thickButton.classList.toggle(
-    "selectedTool",
-    currentThickness === thick_MARKER,
-  );
-}
-
-function selectMarker(thickness: number) {
-  currentTool = "marker";
-  currentThickness = thickness;
-  updateSelectedToolButtons();
-  dispatchToolMoved();
-}
-
 function selectSticker(sticker: StickerType) {
   currentTool = "sticker";
   currentSticker = sticker;
   preview = null;
   dispatchToolMoved();
 }
-
-thinButton.addEventListener("click", () => {
-  selectMarker(thin_MARKER);
-});
-
-thickButton.addEventListener("click", () => {
-  selectMarker(thick_MARKER);
-});
 
 // ------ Mouse events ------------
 // start a new stroke
@@ -381,17 +354,6 @@ redoButton.addEventListener("click", () => {
   dispatchDrawingChanged();
 });
 
-// --- marker thin/ thick button listeners
-thinButton.addEventListener("click", () => {
-  currentThickness = thin_MARKER;
-  updateSelectedToolButtons();
-});
-
-thickButton.addEventListener("click", () => {
-  currentThickness = thick_MARKER;
-  updateSelectedToolButtons();
-});
-
 const imageUpload = document.getElementById("imageUpload") as HTMLInputElement;
 imageUpload.addEventListener("change", () => {
   const file = imageUpload.files?.[0];
@@ -413,6 +375,21 @@ imageUpload.addEventListener("change", () => {
 const exportButton = document.getElementById(
   "exportButton",
 ) as HTMLButtonElement;
+
+const markerSizeSlider = document.getElementById(
+  "markerSize",
+) as HTMLInputElement;
+
+const markerSizeValue = document.getElementById(
+  "markerSizeValue",
+) as HTMLSpanElement;
+
+markerSizeSlider.addEventListener("input", () => {
+  currentThickness = Number(markerSizeSlider.value);
+  markerSizeValue.textContent = markerSizeSlider.value;
+  dispatchToolMoved();
+});
+
 exportButton.addEventListener("click", () => {
   const exportCanvas = document.createElement("canvas");
   exportCanvas.width = 1024;
