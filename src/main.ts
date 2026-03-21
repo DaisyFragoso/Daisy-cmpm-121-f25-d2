@@ -3,6 +3,9 @@ import "./style.css";
 document.body.innerHTML = `
   <div id="app">
     <canvas id="canvas"></canvas>
+    <div>
+      <button id="markerButton">Marker</button>
+    </div>
     <div class="controls-row">
       <label for="markerSize">Marker Size</label>
       <input type="range" id="markerSize" min="1" max="20" value="4" />
@@ -158,6 +161,11 @@ class StickerStamp implements DisplayCommand {
 interface DraggableCommand extends DisplayCommand {
   drag(x: number, y: number): void;
 }
+
+const markerButton = document.getElementById(
+  "markerButton",
+) as HTMLButtonElement;
+
 //marker line
 class MarkerLine implements DraggableCommand {
   private points: Point[] = [];
@@ -419,6 +427,17 @@ const markerSizeValue = document.getElementById(
   "markerSizeValue",
 ) as HTMLSpanElement;
 
+markerButton.addEventListener("click", () => {
+  currentTool = "marker";
+  currentHue = Math.random() * 360;
+
+  colorHueSlider.value = String(Math.floor(currentHue));
+  colorHueValue.textContent = colorHueSlider.value;
+
+  preview = null;
+  dispatchToolMoved();
+});
+
 markerSizeSlider.addEventListener("input", () => {
   currentThickness = Number(markerSizeSlider.value);
   markerSizeValue.textContent = markerSizeSlider.value;
@@ -431,7 +450,7 @@ exportButton.addEventListener("click", () => {
   exportCanvas.height = 1024;
 
   const exportCtx = exportCanvas.getContext("2d")!;
-  exportCtx.scale(4, 4);
+  exportCtx.scale(2, 2);
 
   exportCtx.fillStyle = "green";
   exportCtx.fillRect(0, 0, canvas.width, canvas.height);
