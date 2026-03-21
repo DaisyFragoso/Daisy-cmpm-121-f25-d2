@@ -1,26 +1,32 @@
 import "./style.css";
 
 document.body.innerHTML = `
-  <canvas id="canvas"></canvas>
-  <br><br>
-  <button id="thinButton">Thin</button>
-  <button id="thickButton">Thick</button>
-  <br><br>
-  <div id="stickerButtons"></div>
-  <button id="customStickerButton">Custom</button>
-  <br><br>
-  <button id="clearButton">Clear</button>
-  <button id="undoButton">Undo</button>
-  <button id="redoButton">Redo</button>
-  <input type="file" id="imageUpload" accept="image/png" />
-  <br>
-  <button id="exportButton">Export Art</button>
+  <div id="app">  
+    <canvas id="canvas"></canvas>
+    <div>
+      <button id="thinButton">Thin</button>
+      <button id="thickButton">Thick</button>
+    </div>    
+    <div>
+      <button id="customStickerButton">CustomSticker</button>
+      <div id="stickerButtons"></div>
+    </div>
+    <div>
+      <button id="clearButton">Clear</button>
+      <button id="undoButton">Undo</button>
+      <button id="redoButton">Redo</button>
+    </div>
+    <div>
+      <button id="exportButton">Export Art</button>
+      <input type="file" id="imageUpload" accept="image/png" />
+    </div>
+  </div>
   `;
 
 // canvas set up
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-canvas.width = 256;
-canvas.height = 256;
+canvas.width = 512;
+canvas.height = 512;
 
 const ctx = canvas.getContext("2d")!;
 
