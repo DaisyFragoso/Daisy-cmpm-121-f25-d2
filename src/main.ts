@@ -8,6 +8,11 @@ document.body.innerHTML = `
       <input type="range" id="markerSize" min="1" max="20" value="4" />
       <span id="markerSizeValue">4</span>
     </div>
+    <div class="controls-row">
+      <label for="colorHue">Marker Hue</label>
+      <input type="range" id="colorHue" min="0" max="360" value="0"/>
+      <span id="colorHueValue">0</span>
+    </div>
     <div>
       <button id="customStickerButton">CustomSticker</button>
       <div id="stickerButtons"></div>
@@ -45,10 +50,18 @@ const stickers = ["🍪", "🎶", "❤️"];
 const DEFAULT_MARKER_SIZE = 4;
 let currentThickness = DEFAULT_MARKER_SIZE;
 
+//hue defaults
+let currentHue = 0;
+
 // display command
 interface DisplayCommand {
   display(ctx: CanvasRenderingContext2D): void;
 }
+
+const colorHueSlider = document.getElementById("colorHue") as HTMLInputElement;
+const colorHueValue = document.getElementById(
+  "colorHueValue",
+) as HTMLSpanElement;
 
 const stickerButtonsDiv = document.getElementById(
   "stickerButtons",
@@ -112,6 +125,10 @@ class StickerPreview implements DraggableCommand {
   }
 }
 
+function getMarkerColor(): string {
+  return `hsl(${currentHue}, 100%, 50%)`;
+}
+
 //places sticker
 class StickerStamp implements DisplayCommand {
   sticker: StickerType;
@@ -145,9 +162,16 @@ interface DraggableCommand extends DisplayCommand {
 class MarkerLine implements DraggableCommand {
   private points: Point[] = [];
   private thickness: number;
+  private color: string;
 
-  constructor(startX: number, startY: number, thickness: number) {
+  constructor(
+    startX: number,
+    startY: number,
+    thickness: number,
+    color: string,
+  ) {
     this.thickness = thickness;
+    this.color = color;
     this.points.push({ x: startX, y: startY });
   }
 
@@ -163,7 +187,7 @@ class MarkerLine implements DraggableCommand {
     ctx.lineWidth = this.thickness;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = this.color;
 
     ctx.moveTo(this.points[0].x, this.points[0].y);
     for (let i = 1; i < this.points.length; i++) {
@@ -181,12 +205,13 @@ class MarkerPreview implements DisplayCommand {
     public x: number,
     public y: number,
     public thickness: number,
+    public color: string,
   ) {}
 
   display(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.beginPath();
-    ctx.fillStyle = "black";
+    ctx.fillStyle = this.color;
     ctx.arc(this.x, this.y, this.thickness / 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
@@ -254,7 +279,12 @@ canvas.addEventListener("mousedown", (e) => {
   cursor.active = true;
 
   if (currentTool === "marker") {
-    const newStroke = new MarkerLine(e.offsetX, e.offsetY, currentThickness);
+    const newStroke = new MarkerLine(
+      e.offsetX,
+      e.offsetY,
+      currentThickness,
+      getMarkerColor(),
+    );
     drawing.push(newStroke);
     redoArray.length = 0;
     preview = null;
@@ -284,7 +314,12 @@ canvas.addEventListener("mousemove", (e) => {
   } else {
     // preview for marker
     if (currentTool === "marker") {
-      preview = new MarkerPreview(e.offsetX, e.offsetY, currentThickness);
+      preview = new MarkerPreview(
+        e.offsetX,
+        e.offsetY,
+        currentThickness,
+        getMarkerColor(),
+      );
       dispatchToolMoved();
     } else {
       // preview for sticker
@@ -409,6 +444,13 @@ exportButton.addEventListener("click", () => {
   anchor.href = exportCanvas.toDataURL("image/png");
   anchor.download = "sketchpad.png";
   anchor.click();
+});
+
+colorHueSlider.addEventListener("input", () => {
+  currentHue = Number(colorHueSlider.value);
+  colorHueValue.textContent = colorHueSlider.value;
+  currentTool = "marker";
+  dispatchToolMoved();
 });
 
 // initial background load
